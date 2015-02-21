@@ -1,6 +1,7 @@
 #include <pebble.h>
   
 #define KEY_ASLEEP 0
+#define KEY_BUTTON_PRESSED 1
   
 static Window *s_main_window;
 static TextLayer *s_time_layer;
@@ -103,8 +104,8 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
     DictionaryIterator *iter;
     app_message_outbox_begin(&iter);
 
-    // Add a key-value pair
-    dict_write_uint8(iter, 0, 0);
+    // Tell the JS to query for ASLEEP
+    dict_write_uint8(iter, KEY_ASLEEP, 5);
 
     // Send the message!
     app_message_outbox_send();
@@ -125,39 +126,25 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 
   // For all items
   while(t != NULL) {
-    switch(t->type) {
-      case TUPLE_BYTE_ARRAY: 
-        APP_LOG(APP_LOG_LEVEL_DEBUG, "Asleep is of type TUPLE_BYTE_ARRAY");
-        break;
-      case TUPLE_CSTRING:
-        APP_LOG(APP_LOG_LEVEL_DEBUG, "Asleep is of type TUPLE_CSTRING");
-        break;
-      case TUPLE_UINT:
-        APP_LOG(APP_LOG_LEVEL_DEBUG, "Asleep is of type TUPLE_UINT");
-        break;
-      case TUPLE_INT:
-        APP_LOG(APP_LOG_LEVEL_DEBUG, "Asleep is of type TUPLE_INT ");
-        break;
-    }
     // Which key was received?
     switch(t->key) {
     case KEY_ASLEEP: {
-      APP_LOG(APP_LOG_LEVEL_DEBUG, "Value of asleep: %d", (int8_t)t->value->int8);
       int asleep = (int8_t)t->value->int8;
       snprintf(temperature_buffer, sizeof(temperature_buffer), "Asleep: %d", asleep);
       if (asleep) {
         APP_LOG(APP_LOG_LEVEL_DEBUG, "Asleep was true");
+        
+        // Vibe pattern: ON for 1000ms, OFF for 800ms, ON for 1000ms:
+        static uint32_t const segments[] = { 1000, 800, 1000, 800, 1000, 800, 1000 };
+        VibePattern pat = {
+          .durations = segments,
+          .num_segments = ARRAY_LENGTH(segments),
+        };
+        vibes_enqueue_custom_pattern(pat);
       } else {
         APP_LOG(APP_LOG_LEVEL_DEBUG, "Asleep was false");
       }
       
-      // Vibe pattern: ON for 200ms, OFF for 100ms, ON for 400ms:
-      static uint32_t const segments[] = { 1000, 800, 1000, 800, 1000, 800, 1000 };
-      VibePattern pat = {
-        .durations = segments,
-        .num_segments = ARRAY_LENGTH(segments),
-      };
-      vibes_enqueue_custom_pattern(pat);
       break;
     }
     default:
@@ -185,22 +172,23 @@ static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
   APP_LOG(APP_LOG_LEVEL_INFO, "Outbox send success!");
 }
 
-static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
+static void click_handler(ClickRecognizerRef recognizer, void *context) {
   vibes_cancel();
-}
+  // Begin dictionary
+  DictionaryIterator *iter;
+  app_message_outbox_begin(&iter);
 
-static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
-  vibes_cancel();
-}
+  // Tell the JS to inform the server that the user pressed a button
+  dict_write_uint8(iter, KEY_BUTTON_PRESSED, 5);
 
-static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
-  vibes_cancel();
+  // Send the message!
+  app_message_outbox_send();
 }
 
 static void click_config_provider(void *context) {
-  window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
-  window_single_click_subscribe(BUTTON_ID_UP, up_click_handler);
-  window_single_click_subscribe(BUTTON_ID_DOWN, down_click_handler);
+  window_single_click_subscribe(BUTTON_ID_SELECT, click_handler);
+  window_single_click_subscribe(BUTTON_ID_UP, click_handler);
+  window_single_click_subscribe(BUTTON_ID_DOWN, click_handler);
 }
   
 static void init() {

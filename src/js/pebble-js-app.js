@@ -64,6 +64,17 @@ Pebble.addEventListener('ready',
 Pebble.addEventListener('appmessage',
   function(e) {
     console.log("AppMessage received!");
+    
+    if (e.payload.KEY_ASLEEP == 5) {
+      console.log("Main requested to know SLEEP status from server");
+      getWeather();
+    } else if (e.payload.KEY_BUTTON_PRESSED == 5) {
+      console.log("Main wants to inform the server that the user pressed the button");
+      var url = "http://wake-treehacks.herokuapp.com/pebble_button";
+      xhrRequest(url, "GET", function() {});
+    }
+    console.log("JSON stringify e", JSON.stringify(e));
+    
     getWeather();
   }                     
 );
