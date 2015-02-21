@@ -14,13 +14,13 @@ function locationSuccess(pos) {
   // Send request to Wake backend
   xhrRequest(url, 'GET', 
     function(responseText) {
-      // responseText contains a JSON object with weather info
+      // responseText contains a JSON object with sleep status info
       var json = JSON.parse(responseText);
 
       var asleep = json.SLEEP;
       console.log("Asleep value is " + asleep);
       
-      // Assemble dictionary using our keys
+      // Assemble dictionary using our key
       var dictionary = {
         "KEY_ASLEEP": asleep
       };
@@ -28,10 +28,10 @@ function locationSuccess(pos) {
       // Send to Pebble
       Pebble.sendAppMessage(dictionary,
         function(e) {
-          console.log("Weather info sent to Pebble successfully!");
+          console.log("Sleep status info sent to Pebble successfully!");
         },
         function(e) {
-          console.log("Error sending weather info to Pebble!");
+          console.log("Error sending sleep status info to Pebble!");
         }
       );
     }      
@@ -42,7 +42,7 @@ function locationError(err) {
   console.log("Error requesting location!");
 }
 
-function getWeather() {
+function getSleepStatus() {
   navigator.geolocation.getCurrentPosition(
     locationSuccess,
     locationError,
@@ -56,7 +56,7 @@ Pebble.addEventListener('ready',
     console.log("PebbleKit JS ready!");
 
     // Get the initial weather
-    getWeather();
+    getSleepStatus();
   }
 );
 
@@ -67,7 +67,7 @@ Pebble.addEventListener('appmessage',
     
     if (e.payload.KEY_ASLEEP == 5) {
       console.log("Main requested to know SLEEP status from server");
-      getWeather();
+      getSleepStatus();
     } else if (e.payload.KEY_BUTTON_PRESSED == 5) {
       console.log("Main wants to inform the server that the user pressed the button");
       var url = "http://wake-treehacks.herokuapp.com/pebble_button";
