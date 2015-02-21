@@ -190,12 +190,27 @@ static void click_config_provider(void *context) {
   window_single_click_subscribe(BUTTON_ID_UP, click_handler);
   window_single_click_subscribe(BUTTON_ID_DOWN, click_handler);
 }
+
+static void data_handler(AccelData *data, uint32_t num_samples) {
+  
+  uint32_t i;
+  for (i=0; i<num_samples; i++) {
+    if (data[i].z > 0) {
+      APP_LOG(APP_LOG_LEVEL_DEBUG, "Z above 0: %d", data[i].z);
+    }
+  }
+
+}
   
 static void init() {
   // Create main Window element and assign to pointer
   s_main_window = window_create();
   
   window_set_click_config_provider(s_main_window, click_config_provider);
+  
+  uint32_t num_samples = 3;
+  accel_data_service_subscribe(num_samples, data_handler);
+  accel_service_set_sampling_rate(ACCEL_SAMPLING_10HZ);
 
   // Set handlers to manage the elements inside the Window
   window_set_window_handlers(s_main_window, (WindowHandlers) {
@@ -222,6 +237,7 @@ static void init() {
 static void deinit() {
   // Destroy Window
   window_destroy(s_main_window);
+  
 }
 
 int main(void) {

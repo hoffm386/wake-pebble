@@ -75,6 +75,5 @@ Pebble.addEventListener('appmessage',
     }
     console.log("JSON stringify e", JSON.stringify(e));
     
-    getWeather();
   }                     
 );
