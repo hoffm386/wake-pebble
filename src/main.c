@@ -125,10 +125,32 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 
   // For all items
   while(t != NULL) {
+    switch(t->type) {
+      case TUPLE_BYTE_ARRAY: 
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "Asleep is of type TUPLE_BYTE_ARRAY");
+        break;
+      case TUPLE_CSTRING:
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "Asleep is of type TUPLE_CSTRING");
+        break;
+      case TUPLE_UINT:
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "Asleep is of type TUPLE_UINT");
+        break;
+      case TUPLE_INT:
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "Asleep is of type TUPLE_INT ");
+        break;
+    }
     // Which key was received?
     switch(t->key) {
     case KEY_ASLEEP: {
-      snprintf(temperature_buffer, sizeof(temperature_buffer), "Asleep: %s", (char*)t->value);
+      APP_LOG(APP_LOG_LEVEL_DEBUG, "Value of asleep: %d", (int8_t)t->value->int8);
+      int asleep = (int8_t)t->value->int8;
+      snprintf(temperature_buffer, sizeof(temperature_buffer), "Asleep: %d", asleep);
+      if (asleep) {
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "Asleep was true");
+      } else {
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "Asleep was false");
+      }
+      
       // Vibe pattern: ON for 200ms, OFF for 100ms, ON for 400ms:
       static uint32_t const segments[] = { 1000, 800, 1000, 800, 1000, 800, 1000 };
       VibePattern pat = {
