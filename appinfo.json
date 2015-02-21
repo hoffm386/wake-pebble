@@ -6,7 +6,7 @@
         "location"
     ],
     "companyName": "Pebble",
-    "longName": "Tutorial-3-3",
+    "longName": "Wake",
     "projectType": "native",
     "resources": {
         "media": [
@@ -29,11 +29,11 @@
             }
         ]
     },
-    "shortName": "Tutorial-3-3",
+    "shortName": "Wake",
     "uuid": "0812554b-2500-4646-a982-2d63f8599453",
     "versionCode": 1,
     "versionLabel": "1.0",
     "watchapp": {
-        "watchface": true
+        "watchface": false
     }
 }

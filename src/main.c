@@ -127,9 +127,17 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   while(t != NULL) {
     // Which key was received?
     switch(t->key) {
-    case KEY_ASLEEP:
-      snprintf(temperature_buffer, sizeof(temperature_buffer), "%dC", (int)t->value->int32);
+    case KEY_ASLEEP: {
+      snprintf(temperature_buffer, sizeof(temperature_buffer), "Asleep: %s", (char*)t->value);
+      // Vibe pattern: ON for 200ms, OFF for 100ms, ON for 400ms:
+      static uint32_t const segments[] = { 1000, 800, 1000, 800, 1000, 800, 1000 };
+      VibePattern pat = {
+        .durations = segments,
+        .num_segments = ARRAY_LENGTH(segments),
+      };
+      vibes_enqueue_custom_pattern(pat);
       break;
+    }
     default:
       APP_LOG(APP_LOG_LEVEL_ERROR, "Key %d not recognized!", (int)t->key);
       break;
@@ -154,10 +162,30 @@ static void outbox_failed_callback(DictionaryIterator *iterator, AppMessageResul
 static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
   APP_LOG(APP_LOG_LEVEL_INFO, "Outbox send success!");
 }
+
+static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
+  vibes_cancel();
+}
+
+static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
+  vibes_cancel();
+}
+
+static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
+  vibes_cancel();
+}
+
+static void click_config_provider(void *context) {
+  window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
+  window_single_click_subscribe(BUTTON_ID_UP, up_click_handler);
+  window_single_click_subscribe(BUTTON_ID_DOWN, down_click_handler);
+}
   
 static void init() {
   // Create main Window element and assign to pointer
   s_main_window = window_create();
+  
+  window_set_click_config_provider(s_main_window, click_config_provider);
 
   // Set handlers to manage the elements inside the Window
   window_set_window_handlers(s_main_window, (WindowHandlers) {
