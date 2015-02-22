@@ -39,7 +39,34 @@ function locationSuccess(pos) {
 }
 
 function locationError(err) {
-  console.log("Error requesting location!");
+  // Construct URL
+  var url = "http://wake-treehacks.herokuapp.com/asleep";
+
+  // Send request to Wake backend
+  xhrRequest(url, 'GET', 
+    function(responseText) {
+      // responseText contains a JSON object with sleep status info
+      var json = JSON.parse(responseText);
+
+      var asleep = json.SLEEP;
+      console.log("Asleep value is " + asleep);
+      
+      // Assemble dictionary using our key
+      var dictionary = {
+        "KEY_ASLEEP": asleep
+      };
+
+      // Send to Pebble
+      Pebble.sendAppMessage(dictionary,
+        function(e) {
+          console.log("Sleep status info sent to Pebble successfully!");
+        },
+        function(e) {
+          console.log("Error sending sleep status info to Pebble!");
+        }
+      );
+    }      
+  );
 }
 
 function getSleepStatus() {
@@ -64,15 +91,18 @@ Pebble.addEventListener('ready',
 Pebble.addEventListener('appmessage',
   function(e) {
     console.log("AppMessage received!");
-    
-    if (e.payload.KEY_ASLEEP == 5) {
-      console.log("Main requested to know SLEEP status from server");
-      getSleepStatus();
+    if (e.payload.KEY_USER_NODDED == 5) {
+      console.log("Main wants to inform the server that the user nodded");
+      var nodURL = "http://wake-treehacks.herokuapp.com/pebble_nod";
+      xhrRequest(nodURL, "GET", function() {});
     } else if (e.payload.KEY_BUTTON_PRESSED == 5) {
       console.log("Main wants to inform the server that the user pressed the button");
-      var url = "http://wake-treehacks.herokuapp.com/pebble_button";
-      xhrRequest(url, "GET", function() {});
-    }
+      var buttonURL = "http://wake-treehacks.herokuapp.com/pebble_button";
+      xhrRequest(buttonURL, "GET", function() {});
+    } else if (e.payload.KEY_ASLEEP == 5) {
+      console.log("Main requested to know SLEEP status from server");
+      getSleepStatus();
+    } 
     console.log("JSON stringify e", JSON.stringify(e));
     
   }                     

@@ -1,7 +1,8 @@
 {
     "appKeys": {
         "KEY_ASLEEP": 0,
-        "KEY_BUTTON_PRESSED": 1
+        "KEY_BUTTON_PRESSED": 1,
+        "KEY_USER_NODDED": 2
     },
     "capabilities": [
         "location"

@@ -2,6 +2,7 @@
   
 #define KEY_ASLEEP 0
 #define KEY_BUTTON_PRESSED 1
+#define KEY_USER_NODDED 2
   
 static Window *s_main_window;
 static TextLayer *s_time_layer;
@@ -80,7 +81,7 @@ static void main_window_unload(Window *window) {
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   update_time();
   
-  // Get weather update every 10 seconds
+  // Get sleep status update every 10 seconds
   if(tick_time->tm_sec % 10 == 0) {
     // Begin dictionary
     DictionaryIterator *iter;
@@ -168,12 +169,25 @@ static void click_config_provider(void *context) {
 }
 
 static void data_handler(AccelData *data, uint32_t num_samples) {
-  
+  uint32_t above_zero_count = 0;
   uint32_t i;
   for (i=0; i<num_samples; i++) {
     if (data[i].z > 0) {
       APP_LOG(APP_LOG_LEVEL_DEBUG, "Z above 0: %d", data[i].z);
+      above_zero_count++;
     }
+  }
+  
+  if (above_zero_count > (4*num_samples/5)) {
+    // Begin dictionary
+    DictionaryIterator *iter;
+    app_message_outbox_begin(&iter);
+  
+    // Tell the JS to inform the server that the user nodded their head
+    dict_write_uint8(iter, KEY_USER_NODDED, 5);
+  
+    // Send the message!
+    app_message_outbox_send();
   }
 
 }
@@ -184,7 +198,7 @@ static void init() {
   
   window_set_click_config_provider(s_main_window, click_config_provider);
   
-  uint32_t num_samples = 3;
+  uint32_t num_samples = 20;
   accel_data_service_subscribe(num_samples, data_handler);
   accel_service_set_sampling_rate(ACCEL_SAMPLING_10HZ);
 
