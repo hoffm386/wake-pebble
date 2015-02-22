@@ -19,6 +19,7 @@
             },
             {
                 "file": "images/logo.png",
+                "menuIcon": true,
                 "name": "LOGO_IMAGE",
                 "type": "png"
             }

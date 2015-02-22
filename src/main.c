@@ -5,15 +5,13 @@
 #define KEY_USER_NODDED 2
   
 static Window *s_main_window;
-static TextLayer *s_time_layer;
-
-static GFont s_time_font;
 
 static BitmapLayer *s_background_layer;
 static GBitmap *s_background_bitmap_logo;
 static GBitmap *s_background_bitmap_wake_up;
 
 int num_queries = 0;
+int seconds_since_last_nod = 0;
 
 static void main_window_load(Window *window) {
   //Create GBitmaps, then set logo one to created BitmapLayer
@@ -40,8 +38,8 @@ static void main_window_unload(Window *window) {
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   
-  // Get sleep status update every 10 seconds
-  if(tick_time->tm_sec % 10 == 0) {
+  // Get sleep status update every 15 seconds
+  if(tick_time->tm_sec % 15 == 0) {
     // Begin dictionary
     DictionaryIterator *iter;
     app_message_outbox_begin(&iter);
@@ -57,6 +55,8 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Number of total queries: %d", num_queries);
 
   }
+  
+  seconds_since_last_nod++;
 }
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
@@ -133,12 +133,12 @@ static void data_handler(AccelData *data, uint32_t num_samples) {
   uint32_t i;
   for (i=0; i<num_samples; i++) {
     if (data[i].z > 0) {
-      APP_LOG(APP_LOG_LEVEL_DEBUG, "Z above 0: %d", data[i].z);
+      //APP_LOG(APP_LOG_LEVEL_DEBUG, "Z above 0: %d", data[i].z);
       above_zero_count++;
     }
   }
   
-  if (above_zero_count > (4*num_samples/5)) {
+  if (above_zero_count > (num_samples/2) && seconds_since_last_nod > 15) {
     // Begin dictionary
     DictionaryIterator *iter;
     app_message_outbox_begin(&iter);
@@ -148,6 +148,8 @@ static void data_handler(AccelData *data, uint32_t num_samples) {
   
     // Send the message!
     app_message_outbox_send();
+    
+    seconds_since_last_nod = 0;
   }
 
 }
@@ -158,7 +160,7 @@ static void init() {
   
   window_set_click_config_provider(s_main_window, click_config_provider);
   
-  uint32_t num_samples = 20;
+  uint32_t num_samples = 10;
   accel_data_service_subscribe(num_samples, data_handler);
   accel_service_set_sampling_rate(ACCEL_SAMPLING_10HZ);
 
