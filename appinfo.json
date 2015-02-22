@@ -13,21 +13,14 @@
     "resources": {
         "media": [
             {
-                "file": "images/background.png",
-                "name": "IMAGE_BACKGROUND",
+                "file": "images/wake_up.png",
+                "name": "WAKE_UP_IMAGE",
                 "type": "png"
             },
             {
-                "compatibility": "2.7",
-                "file": "fonts/perfect-dos-vga.ttf",
-                "name": "FONT_PERFECT_DOS_20",
-                "type": "font"
-            },
-            {
-                "compatibility": "2.7",
-                "file": "fonts/perfect-dos-vga.ttf",
-                "name": "FONT_PERFECT_DOS_48",
-                "type": "font"
+                "file": "images/logo.png",
+                "name": "LOGO_IMAGE",
+                "type": "png"
             }
         ]
     },
